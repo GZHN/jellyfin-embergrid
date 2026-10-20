@@ -1,10 +1,10 @@
 # Publish on GitHub
 
-The export is a standalone folder. It contains no Miru runtime dependencies, git history, user data or secrets. No remote repository has been created by this export.
+This folder is the complete project. It contains no private runtime dependencies, user data, or secrets.
 
 ## Browser upload
 
-1. Create a new repository on GitHub; suggested name: **jellyfin-miru-ratings**.
+1. Create a new repository on GitHub; suggested name: **jellyfin-embergrid**.
 2. Upload the **contents** of this project folder to the repository root, preserving docs, tests, examples and the hidden .github folder. Do not upload only the ZIP if you want browseable code and CI.
 3. Keep LICENSE and NOTICE.md. Review README and replace any example repository owner placeholders used in the loader.
 4. Open the Actions tab and confirm checks pass.
@@ -15,13 +15,13 @@ GitHub's browser upload may omit hidden dotfiles if your file picker hides them.
 
 ## Git upload from this standalone folder
 
-Use these commands only in this exported project folder, not the parent Miru repository. Replace YOUR_GITHUB_USER with your account and create the remote repository first:
+Run these commands in this project folder. Replace YOUR_GITHUB_USER with your account and create the remote repository first:
 
 ```sh
 git init -b main
 git add .
-git commit -m "Initial standalone Miru ratings release"
-git remote add origin https://github.com/YOUR_GITHUB_USER/jellyfin-miru-ratings.git
+git commit -m "Initial Embergrid release"
+git remote add origin https://github.com/YOUR_GITHUB_USER/jellyfin-embergrid.git
 git push -u origin main
 git tag v1.0.0
 git push origin v1.0.0
@@ -29,12 +29,12 @@ git push origin v1.0.0
 
 ## CDN installation after publication
 
-Edit examples/cdn-loader.js: set repository to YOUR_GITHUB_USER/jellyfin-miru-ratings and revision to the tag you published. Paste that configured loader into the Injector field instead of the full script. The file must exist at the repository root at that tag.
+Edit examples/cdn-loader.js: set repository to YOUR_GITHUB_USER/jellyfin-embergrid and revision to the tag you published. Paste that configured loader into the Injector field instead of the full script. The file must exist at the repository root at that tag.
 
 Example published URL shape:
 
 ```text
-https://cdn.jsdelivr.net/gh/YOUR_GITHUB_USER/jellyfin-miru-ratings@v1.0.0/Jellyfin-Miru-Episode-Ratings.js
+https://cdn.jsdelivr.net/gh/YOUR_GITHUB_USER/jellyfin-embergrid@v1.0.0/Jellyfin-Embergrid-Episode-Ratings.js
 ```
 
 This example is a template, not a live project URL. CDN propagation/caching can delay new content. Prefer immutable tested tags or commits; do not move an existing release tag. To upgrade, change the loader revision, save and fully refresh. An @latest/main reference tracks future upstream changes and reduces predictability.
@@ -48,5 +48,5 @@ This example is a template, not a live project URL. CDN propagation/caching can 
 - Ensure DEBUG is false by default; no private screenshots or tokens in the repository.
 - Configure issue templates and optionally enable private vulnerability reporting.
 
-Suggested description: **Miru-inspired episode ratings table for Jellyfin Web, with switchable axes, season averages and library links.**
+Suggested description: **Episode ratings heatmap for Jellyfin Web, with switchable axes, season averages and library links.**
 Suggested topics: jellyfin, jellyfin-web, episode-ratings, heatmap, javascript.

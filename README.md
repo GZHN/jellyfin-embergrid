@@ -1,18 +1,18 @@
-# Jellyfin Miru Ratings
+# Embergrid
 
-A Miru-inspired episode ratings grid for **Jellyfin Web**, installed through [JavaScript Injector](https://github.com/n00bcodr/Jellyfin-JavaScript-Injector).
+An episode ratings heatmap for **Jellyfin Web**, installed through [JavaScript Injector](https://github.com/n00bcodr/Jellyfin-JavaScript-Injector).
 
 A collapsible table appears between Seasons and Cast. Open it to fetch ratings. Use the top-left switch to swap seasons and episodes. There is no separate view selector.
 
-**[Nederlandse installatiehandleiding](docs/INSTALL-NL.md)** · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Publishing](docs/PUBLISHING.md) · [Changelog](CHANGELOG.md)
+[Troubleshooting](docs/TROUBLESHOOTING.md) · [Publishing](docs/PUBLISHING.md) · [Changelog](CHANGELOG.md)
 
 ## Features
 
-- Miru's stepped rating colors and a compact legend.
+- Stepped heatmap colors and a compact legend.
 - One table with horizontal/vertical axis switching; preference saved in the browser.
 - Season averages calculated from rated episodes only.
 - Episode and season links to your Jellyfin library, with IMDb season links as fallback.
-- Episode metadata tooltips on hover; touch-and-hold support inherited from upstream.
+- Episode metadata tooltips on hover, including touch-and-hold.
 - Closed by default to keep ratings hidden until you choose to open them.
 - Cached metadata and ratings, isolated by server, web path and user.
 - 15-second external dataset timeout, visible Retry on load errors, visible keyboard focus.
@@ -33,8 +33,8 @@ The user confirmed that the v3 predecessor mounted successfully in a local Jelly
 1. Install JavaScript Injector using its own instructions and restart Jellyfin if required by the plugin.
 2. Open **Dashboard → JavaScript Injector / JS Injector**.
 3. Disable/remove any previous episode-ratings loader or script to avoid competing implementations.
-4. Add a script named **Miru Episode Ratings**.
-5. Open [Jellyfin-Miru-Episode-Ratings.js](Jellyfin-Miru-Episode-Ratings.js), select **Raw**, and copy the entire contents into **JavaScript Code**. Do not include Markdown fences or HTML script tags.
+4. Add a script named **Embergrid**.
+5. Open [Jellyfin-Embergrid-Episode-Ratings.js](Jellyfin-Embergrid-Episode-Ratings.js), select **Raw**, and copy the entire contents into **JavaScript Code**. Do not include Markdown fences or HTML script tags.
 6. Enable the entry and save. If your plugin exposes a Script URL field, leave it empty for this installation method. This script is not an ES module.
 7. Refresh Jellyfin with **Ctrl+F5**, open a series with seasons, and expand **IMDb Episodes Grid**.
 
@@ -61,7 +61,7 @@ Edit the `CONFIG` object near the top before pasting:
 | MAX_EPISODE_SPAN | 200 | Extra episode indices allowed for a combined file |
 | DATASET_URL | ya0903 dataset on jsDelivr | External per-show ratings JSON folder |
 
-The dataset request timeout is currently fixed at 15 seconds. Specials (season 0) are excluded. Switching axes uses the existing upstream local-storage preference key.
+The dataset request timeout is currently fixed at 15 seconds. Specials (season 0) are excluded. The axes choice is stored in the browser under `jf-imdb-episodes-grid-inverted-v1`.
 
 ## Rating colors
 
@@ -109,6 +109,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for manual validation before releasing.
 
 ## Credits and license
 
-Derived from [Damocles-fr's Jellyfin Episodes Ratings Grid](https://github.com/Damocles-fr/jellyfin-imdb-episodes-heatmap-ratings-grid). This edition adds Miru-inspired styling, averages and reliability adjustments. Thanks to n00bcodr for JavaScript Injector, ya0903 for the dataset and upstream contributors including grimmdev for tooltip work. This project is not affiliated with Jellyfin or IMDb.
+Thanks to n00bcodr for JavaScript Injector and ya0903 for the ratings dataset. Tooltip behavior includes work credited to grimmdev. License provenance is in [NOTICE.md](NOTICE.md). This project is not affiliated with Jellyfin or IMDb.
 
 Distributed under the [MIT license](LICENSE), retaining the original copyright. See [NOTICE.md](NOTICE.md) for provenance. External services and data retain their own terms.

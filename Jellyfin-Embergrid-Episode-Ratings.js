@@ -1,10 +1,10 @@
 (function () {
     'use strict';
 
-    // Jellyfin Miru Ratings v1.0.0 — SPDX-License-Identifier: MIT
+    // Jellyfin Embergrid v1.0.0 — SPDX-License-Identifier: MIT
     // Derived from Damocles-fr/jellyfin-imdb-episodes-heatmap-ratings-grid.
     // Copyright (c) 2026 Damocles-fr. See LICENSE and NOTICE.md.
-    // Miru edition: palette, season averages, cache isolation and retry handling.
+    // Embergrid: heatmap palette, season averages, cache isolation and retry handling.
     /*  Episodes Ratings Grid  SETTINGS  */
     const CONFIG = {
         DEBUG: false,                                       // Show mount diagnostics; enable only when troubleshooting
@@ -19,29 +19,29 @@
         DATASET_URL: 'https://cdn.jsdelivr.net/gh/ya0903/imdb-episode-dataset@main/data/shows' // IMDb ratings dataset folder, one <imdbId>.json file per series
     };
 
-    if (window.__jfMiruEpisodesGrid) return;
-    window.__jfMiruEpisodesGrid = true;
+    if (window.__jfEmbergrid) return;
+    window.__jfEmbergrid = true;
 
     // Temporary visible diagnostics: confirms execution without browser developer tools.
     let diagnosticNode = null;
     function diagnostic(message) {
         if (!CONFIG.DEBUG) return;
-        console.info('[JF-Miru]', message);
-        if (!/mislukt/i.test(message)) { if (diagnosticNode) { diagnosticNode.remove(); diagnosticNode=null; } return; }
+        console.info('[JF-Embergrid]', message);
+        if (!/failed/i.test(message)) { if (diagnosticNode) { diagnosticNode.remove(); diagnosticNode=null; } return; }
         if (!document.body) return;
         if (!diagnosticNode) {
             diagnosticNode = document.createElement('div');
-            diagnosticNode.id = 'jf-miru-diagnostic';
+            diagnosticNode.id = 'jf-embergrid-diagnostic';
             diagnosticNode.style.cssText = 'position:fixed;bottom:12px;right:12px;z-index:2147483647;max-width:80vw;padding:10px 14px;background:#17212b;color:white;border:1px solid #1da1f2;border-radius:6px;font:13px sans-serif;pointer-events:none';
             document.body.appendChild(diagnosticNode);
         }
-        diagnosticNode.textContent = 'Miru 1.0.0: ' + message;
+        diagnosticNode.textContent = 'Embergrid 1.0.0: ' + message;
     }
     let lastDiagnostic = '';
     function report(message) { if(message !== lastDiagnostic) { lastDiagnostic=message; diagnostic(message); } }
-    diagnostic('script gestart');
+    diagnostic('script started');
     const ROOT = '[data-jf-ieg-root="1"]';
-    const STYLE_ID = 'jf-miru-episodes-grid-style-v1';
+    const STYLE_ID = 'jf-embergrid-style-v1';
     const INV_KEY = 'jf-imdb-episodes-grid-inverted-v1';
     const TIP_ID = 'jf-hover-tooltip';
     const TIP_STYLE_ID = 'jf-hover-tooltip-style';
@@ -80,14 +80,14 @@
             c && typeof c.getCurrentUserId === 'function' ? c.getCurrentUserId() : '']);
     };
     const cacheGet = k => {
-        k = 'miru-v1:' + scope() + ':' + k;
+        k = 'embergrid-v1:' + scope() + ':' + k;
         try {
             const o = JSON.parse(sessionStorage.getItem(k) || 'null');
             return o && Date.now() <= o.e ? o.v : null;
         } catch { return null; }
     };
     const cacheSet = (k, v) => {
-        k = 'miru-v1:' + scope() + ':' + k;
+        k = 'embergrid-v1:' + scope() + ':' + k;
         try { sessionStorage.setItem(k, JSON.stringify({ v, e: Date.now() + TTL })); } catch { }
     };
     const toRating = v => {
@@ -227,7 +227,7 @@ ${ROOT}{--c1:2.72rem;--rh:2.36rem;--axis:rgba(34,34,40,.84);--axis2:rgba(48,48,5
 .jf-ieg-rating,.jf-ieg-empty{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 
 ${ROOT} :is(a,button,select):focus-visible{outline:3px solid #1da1f2 !important;outline-offset:3px}
-.jf-miru-legend{display:flex;flex-wrap:wrap;gap:.4rem;margin:.8rem 0}.jf-miru-legend span{padding:.3rem .5rem;border-radius:5px;font-size:.8rem}
+.jf-embergrid-legend{display:flex;flex-wrap:wrap;gap:.4rem;margin:.8rem 0}.jf-embergrid-legend span{padding:.3rem .5rem;border-radius:5px;font-size:.8rem}
 @media (max-width:900px){${ROOT}{max-width:calc(100% - .4rem)}.jf-ieg-body{padding:.72rem .42rem .82rem .42rem !important}.jf-ieg-scroll{padding-right:.12rem !important}}
 `;
         document.head.appendChild(s);
@@ -451,7 +451,7 @@ ${ROOT} :is(a,button,select):focus-visible{outline:3px solid #1da1f2 !important;
     function renderGrid(body, seasons, imdbId, sid, seriesName) {
         body.innerHTML = '';
         const inverted = getInv();
-        const legend=document.createElement('div'); legend.className='jf-miru-legend';
+        const legend=document.createElement('div'); legend.className='jf-embergrid-legend';
         for (const [score,text] of [[9.6,'Masterpiece'],[9,'Amazing'],[8,'Great'],[7,'Good'],[6,'Average'],[5,'Bad'],[1,'Trash']]) { const badge=document.createElement('span'); badge.textContent=text; badge.title=score===1?'Below 5':score+'+'; badge.style.cssText=ratingStyle(score); legend.append(badge); } body.append(legend);
         const allEpNums = [...new Set(seasons.flatMap(s => s.episodes.map(e => e.ep)))].sort((a, b) => a - b);
         const scroll = document.createElement('div');
@@ -641,15 +641,15 @@ ${ROOT} :is(a,button,select):focus-visible{outline:3px solid #1da1f2 !important;
     function reconcile() {
         try {
             const current = document.querySelector('.itemDetailPage:not(.hide)');
-            if (!current) { report('wacht op een seriepagina'); return; }
+            if (!current) { report('waiting for a series page'); return; }
             const params = hashParams();
-            if (!params.id) { report('geen serie-ID in pagina-adres'); return; }
-            if (!current.querySelector(SEASON)) { report('seriepagina gevonden; wacht op seizoenenblok'); return; }
+            if (!params.id) { report('no series id in the page address'); return; }
+            if (!current.querySelector(SEASON)) { report('series page found; waiting for the seasons block'); return; }
             watch(current, params);
-            report(current.querySelector(ROOT) ? 'ratingblok ingevoegd' : 'ratingblok ontbreekt na invoegen');
+            report(current.querySelector(ROOT) ? 'ratings block inserted' : 'ratings block missing after insert');
         } catch (error) {
-            report('invoegen mislukt: ' + error.message);
-            console.warn('[JF-Miru 1.0.0] Could not mount episode ratings', error && error.stack || error);
+            report('insert failed: ' + error.message);
+            console.warn('[JF-Embergrid 1.0.0] Could not mount episode ratings', error && error.stack || error);
         }
     }
     document.addEventListener('viewshow', e => {

@@ -4,7 +4,7 @@
 
 - Confirm the Injector entry is enabled and saved, and refresh the browser fully.
 - Open a **series page with season cards**. The section is inserted before Cast, or after the season container when Cast is absent.
-- Disable the original script and any older Miru versions. Run only one implementation.
+- Disable any other episode-ratings script. Run only one implementation.
 - Copy the complete raw JavaScript file, not the GitHub HTML page, a Markdown link, or code containing literal HTML entities.
 - Set `CONFIG.DEBUG` to `true`, save and refresh. On-screen status reports the mounting stage; console errors include additional detail. Restore `false` when finished.
 - If an old status remains after updating, verify the saved code and fully reload. The initialization guard intentionally prevents multiple executions in one page lifetime.
@@ -24,17 +24,17 @@ Dataset numbering can differ from your Jellyfin metadata, especially for anime, 
 
 ## Cached results / reset
 
-Cache expires after CACHE_MINUTES (120 by default). Closing the tab ends its session storage. To explicitly clear only this edition's cache, use the browser console:
+Cache expires after CACHE_MINUTES (120 by default). Closing the tab ends its session storage. To clear only this script's cache, use the browser console:
 
 ```javascript
 Object.keys(sessionStorage)
-  .filter(key => key.startsWith('miru-v1:'))
+  .filter(key => key.startsWith('embergrid-v1:'))
   .forEach(key => sessionStorage.removeItem(key));
 localStorage.removeItem('jf-imdb-episodes-grid-inverted-v1');
 location.reload();
 ```
 
-This also resets the axes preference shared with the upstream script. Do not clear all site storage unnecessarily; it may affect your Jellyfin sign-in and other preferences.
+This also resets the axes preference. Do not clear all site storage unnecessarily; it may affect your Jellyfin sign-in and other preferences.
 
 ## Reporting a problem
 
