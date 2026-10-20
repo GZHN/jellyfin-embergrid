@@ -1,0 +1,14 @@
+{
+  "name": "jellyfin-miru-ratings",
+  "version": "1.0.0",
+  "description": "Miru-inspired episode ratings grid for Jellyfin Web, with invertible axes and season averages.",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "check": "node --check Jellyfin-Miru-Episode-Ratings.js && node --check examples/cdn-loader.js",
+    "test": "node --test tests/*.test.cjs"
+  }
+}
