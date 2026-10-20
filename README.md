@@ -4,6 +4,12 @@ An episode ratings heatmap for **Jellyfin Web**, installed through [JavaScript I
 
 A collapsible table appears between Seasons and Cast. Open it to fetch ratings. Use the top-left switch to swap seasons and episodes. There is no separate view selector.
 
+## Screenshots
+
+Episodes run across the top. The last cell on each row is that season's average, counted from rated episodes only. The corner button swaps seasons and episodes.
+
+![Ratings heatmap with episodes across the top](docs/screenshots/episodes-across.png)
+
 [Troubleshooting](docs/TROUBLESHOOTING.md) · [Publishing](docs/PUBLISHING.md) · [Changelog](CHANGELOG.md)
 
 ## Features

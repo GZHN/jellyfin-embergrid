@@ -22,12 +22,11 @@
     if (window.__jfEmbergrid) return;
     window.__jfEmbergrid = true;
 
-    // Temporary visible diagnostics: confirms execution without browser developer tools.
+    // Optional mount diagnostics. Silent unless CONFIG.DEBUG is true.
     let diagnosticNode = null;
     function diagnostic(message) {
         if (!CONFIG.DEBUG) return;
         console.info('[JF-Embergrid]', message);
-        if (!/failed/i.test(message)) { if (diagnosticNode) { diagnosticNode.remove(); diagnosticNode=null; } return; }
         if (!document.body) return;
         if (!diagnosticNode) {
             diagnosticNode = document.createElement('div');
@@ -48,7 +47,6 @@
     const IMDB = 'https://www.imdb.com/title/';
     const BOXES = ['#listChildrenCollapsible', '#childrenCollapsible'];
     const SEASON = BOXES.map(b => b + ' [data-type="Season"]').join(',');
-    const TYPED = BOXES.map(b => b + ' [data-type]').join(',');
     const CELL = '.jf-ieg-rating,.jf-ieg-empty';
     const TTL = Math.max(1, +CONFIG.CACHE_MINUTES || 120) * 60000;
     const TIP_WIDTH = 'min(' + Math.max(200, +CONFIG.TOOLTIP_WIDTH_PX || 400) + 'px, calc(100vw - 20px))';
@@ -226,7 +224,7 @@ ${ROOT}{--c1:2.72rem;--rh:2.36rem;--axis:rgba(34,34,40,.84);--axis2:rgba(48,48,5
 .jf-ieg-ghost{opacity:0;pointer-events:none;background:transparent !important;border-color:transparent !important;box-shadow:none !important}
 .jf-ieg-rating,.jf-ieg-empty{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 
-${ROOT} :is(a,button,select):focus-visible{outline:3px solid #1da1f2 !important;outline-offset:3px}
+${ROOT} :is(a,button):focus-visible{outline:3px solid #1da1f2 !important;outline-offset:3px}
 .jf-embergrid-legend{display:flex;flex-wrap:wrap;gap:.4rem;margin:.8rem 0}.jf-embergrid-legend span{padding:.3rem .5rem;border-radius:5px;font-size:.8rem}
 @media (max-width:900px){${ROOT}{max-width:calc(100% - .4rem)}.jf-ieg-body{padding:.72rem .42rem .82rem .42rem !important}.jf-ieg-scroll{padding-right:.12rem !important}}
 `;
@@ -260,10 +258,17 @@ ${ROOT} :is(a,button,select):focus-visible{outline:3px solid #1da1f2 !important;
     };
 
     function fetchTip(id) {
-        let p = tipCache.get(scope()+':'+id);
+        const key = scope() + ':' + id;
+        let p = tipCache.get(key);
         if (p) return p;
-        p = getItem(id, 'Overview,Genres').then(v => { if (!v) tipCache.delete(scope()+':'+id); return v; });
-        tipCache.set(scope()+':'+id,p);
+        p = getItem(id, 'Overview,Genres').then(v => {
+            if (!v) tipCache.delete(key);
+            return v;
+        }, err => {
+            tipCache.delete(key);
+            throw err;
+        });
+        tipCache.set(key, p);
         if (tipCache.size > 200) tipCache.delete(tipCache.keys().next().value);
         return p;
     }
@@ -298,7 +303,7 @@ ${ROOT} :is(a,button,select):focus-visible{outline:3px solid #1da1f2 !important;
         const parts = [
             item.ProductionYear || '',
             item.CommunityRating ? '⭐ ' + Number(item.CommunityRating).toFixed(1) : '',
-            item.Genres && item.Genres.length ? item.Genres.slice(0, 3).join(',') : ''
+            item.Genres && item.Genres.length ? item.Genres.slice(0, 3).join(', ') : ''
         ].filter(Boolean);
         meta.className = 'jf-tooltip-meta';
         parts.forEach((p, i) => {
@@ -509,7 +514,7 @@ ${ROOT} :is(a,button,select):focus-visible{outline:3px solid #1da1f2 !important;
                 d.className = 'jf-ieg-cell jf-ieg-empty emby-button button-link';
                 d.textContent = '—';
             } else {
-                d.className = 'jf-ieg-cell jf-ieg-rating' + '' + ' emby-button button-link';
+                d.className = 'jf-ieg-cell jf-ieg-rating emby-button button-link';
                 d.textContent = r.toFixed(1);
                 d.style.cssText = ratingStyle(r);
             }
@@ -522,31 +527,44 @@ ${ROOT} :is(a,button,select):focus-visible{outline:3px solid #1da1f2 !important;
             return d;
         };
 
+        const average = s => { const rated = s.episodes.map(e => toRating(e.rating)).filter(r => r != null); return rated.length ? rated.reduce((a, b) => a + b, 0) / rated.length : null; };
+        const avgCell = s => {
+            const cell = document.createElement('div'), avg = average(s);
+            cell.className = 'jf-ieg-cell';
+            cell.textContent = avg == null ? '—' : avg.toFixed(1);
+            cell.title = 'Season ' + s.num + ' average (rated episodes only)';
+            if (avg != null) cell.style.cssText = ratingStyle(avg);
+            return cell;
+        };
+        const avgHead = () => {
+            const label = document.createElement('div');
+            label.className = 'jf-ieg-cell jf-ieg-episode';
+            label.textContent = 'AVG.';
+            return label;
+        };
+
         if (!inverted) {
             for (const s of seasons) grid.appendChild(mkSeason(s));
             for (const n of allEpNums) {
                 grid.appendChild(mkEpHead(n, true));
                 for (const s of seasons) grid.appendChild(mkCell(s.episodes.find(e => e.ep === n), s));
             }
+            const label = avgHead();
+            label.classList.add('jf-ieg-sticky-left');
+            grid.append(label);
+            seasons.forEach(s => grid.append(avgCell(s)));
         } else {
             for (const n of allEpNums) grid.appendChild(mkEpHead(n, false));
-            const avgHead=document.createElement('div'); avgHead.textContent='AVG.'; grid.append(avgHead);
-            grid.style.gridTemplateColumns='var(--c1) repeat('+(allEpNums.length+1)+', var(--c1))';
+            grid.append(avgHead());
+            grid.style.gridTemplateColumns = 'var(--c1) repeat(' + (allEpNums.length + 1) + ', var(--c1))';
             for (const s of seasons) {
                 const sh = mkSeason(s);
                 sh.classList.add('jf-ieg-sticky-left');
                 grid.appendChild(sh);
                 for (const n of allEpNums) grid.appendChild(mkCell(s.episodes.find(e => e.ep === n), s));
-                const rated=s.episodes.map(e=>toRating(e.rating)).filter(r=>r!=null);
-                const avg=document.createElement('div'); avg.className='jf-ieg-cell';
-                const value=rated.length ? rated.reduce((a,b)=>a+b,0)/rated.length : null;
-                avg.textContent=value==null?'—':value.toFixed(1); if(value!=null) avg.style.cssText=ratingStyle(value); grid.append(avg);
+                grid.append(avgCell(s));
             }
         }
-
-        const average = s => { const rated=s.episodes.map(e=>toRating(e.rating)).filter(r=>r!=null); return rated.length ? rated.reduce((a,b)=>a+b,0)/rated.length : null; };
-        const avgCell = s => { const cell=document.createElement('div'), avg=average(s); cell.className='jf-ieg-cell'; cell.textContent=avg==null?'—':avg.toFixed(1); cell.title='Season '+s.num+' average (rated episodes only)'; if(avg!=null) cell.style.cssText=ratingStyle(avg); return cell; };
-        if(!inverted) { const label=document.createElement('div'); label.textContent='AVG.'; grid.append(label); seasons.forEach(s=>grid.append(avgCell(s))); }
         scroll.appendChild(grid);
         body.appendChild(scroll);
         bindGrid(scroll, grid, () => {
@@ -578,7 +596,7 @@ ${ROOT} :is(a,button,select):focus-visible{outline:3px solid #1da1f2 !important;
             else renderFallback(body, imdbId);
             root.dataset.loaded = '1';
         } catch (e) {
-            console.warn('[JF-IEG] Panel load failed', e);
+            console.warn('[JF-Embergrid] Panel load failed', e);
             body.replaceChildren();
             const message=document.createElement('p'); message.setAttribute('role','status'); message.textContent='Could not load episode ratings. Try again.';
             const retry=document.createElement('button'); retry.type='button'; retry.textContent='Retry'; retry.addEventListener('click',()=>loadPanel(root)); body.append(message,retry);
@@ -649,7 +667,7 @@ ${ROOT} :is(a,button,select):focus-visible{outline:3px solid #1da1f2 !important;
             report(current.querySelector(ROOT) ? 'ratings block inserted' : 'ratings block missing after insert');
         } catch (error) {
             report('insert failed: ' + error.message);
-            console.warn('[JF-Embergrid 1.0.0] Could not mount episode ratings', error && error.stack || error);
+            console.warn('[JF-Embergrid] Could not mount episode ratings', error);
         }
     }
     document.addEventListener('viewshow', e => {
