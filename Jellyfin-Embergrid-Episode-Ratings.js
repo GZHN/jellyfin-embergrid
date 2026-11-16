@@ -188,21 +188,62 @@
         return any ? out : null;
     }
 
+    const validSeason = n => Number.isSafeInteger(n) && n > 0 && n <= CONFIG.MAX_SEASONS;
+    const validEpisode = n => Number.isSafeInteger(n) && n > 0 && n <= MAX_EPISODE_NUMBER;
+
+    // Libraries and IMDb often split long-running shows differently, e.g. Jellyfin
+    // S2E61 (absolute numbering) versus IMDb S1E61, or Jellyfin S1E61 versus IMDb S2E3.
+    // Returns a function that maps a Jellyfin (season, episode) to the matching IMDb
+    // (season, episode) when the pair is missing from IMDb but its absolute number exists.
+    function absoluteMapper(ds, jf) {
+        const seasons = Object.keys(ds || {}).map(Number).filter(validSeason).sort((a, b) => a - b);
+        const byAbsolute = new Map();
+        for (const s of seasons) {
+            for (const e of Object.keys(ds[s]).map(Number).filter(validEpisode).sort((a, b) => a - b))
+                byAbsolute.set(byAbsolute.size + 1, { s, e });
+        }
+        if (!byAbsolute.size) return (s, e) => ({ s, e });
+        // Episodes of a Jellyfin season only count as absolutely numbered when they
+        // continue past the earlier local seasons; this keeps newly aired episodes
+        // that IMDb does not list yet (e.g. S5E10) in their own season.
+        const local = jf.seasonsByNum || {}, firstEp = {}, prior = {};
+        let seen = 0;
+        for (const s of Object.keys(local).map(Number).filter(validSeason).sort((a, b) => a - b)) {
+            const eps = local[s] || [];
+            firstEp[s] = Math.min(...eps.map(j => j.ep));
+            prior[s] = seen;
+            seen += eps.reduce((sum, j) => sum + (j.epEnd >= j.ep ? j.epEnd - j.ep + 1 : 1), 0);
+        }
+        return (s, e) => {
+            if (ds[s] && Object.prototype.hasOwnProperty.call(ds[s], e)) return { s, e };
+            const looksAbsolute = s === 1 || (firstEp[s] > 1 && e > prior[s]);
+            return (looksAbsolute && byAbsolute.get(e)) || { s, e };
+        };
+    }
+
     function mergeData(ds, jf) {
-        const nums = [...Object.keys(jf.seasonsByNum || {}), ...Object.keys(ds || {})]
-            .map(Number).filter(n => Number.isSafeInteger(n) && n > 0 && n <= CONFIG.MAX_SEASONS);
-        const max = Math.max(0, ...nums), out = [];
-        for (let s = 1; s <= max; s++) {
-            const byEp = new Map(), d = (ds && ds[s]) || {};
+        const bySeason = new Map(), seasonIds = Object.assign({}, jf.seasonIds || {});
+        const season = s => {
+            if (!bySeason.has(s)) bySeason.set(s, new Map());
+            return bySeason.get(s);
+        };
+        for (const sk of Object.keys(ds || {})) {
+            const s = Number(sk), d = ds[sk] || {};
+            if (!validSeason(s)) continue;
             for (const n of Object.keys(d)) {
                 const ep = Number(n), rating = toRating(d[n]);
-                if (Number.isSafeInteger(ep) && ep > 0 && ep <= MAX_EPISODE_NUMBER)
-                    byEp.set(ep, { ep, rating, source: rating == null ? null : 'IMDb', jfId: '' });
+                if (validEpisode(ep)) season(s).set(ep, { ep, rating, source: rating == null ? null : 'IMDb', jfId: '' });
             }
-            for (const j of (jf.seasonsByNum[s] || [])) {
+        }
+        const target = absoluteMapper(ds, jf);
+        for (const sk of Object.keys(jf.seasonsByNum || {})) {
+            const s = Number(sk);
+            if (!validSeason(s)) continue;
+            for (const j of (jf.seasonsByNum[sk] || [])) {
                 const end = Math.min(j.epEnd >= j.ep ? j.epEnd : j.ep, MAX_EPISODE_NUMBER);
                 for (let n = j.ep; n <= end; n++) {
-                    const x = byEp.get(n) || { ep: n, rating: null, source: null, jfId: '' };
+                    const t = target(s, n), byEp = season(t.s);
+                    const x = byEp.get(t.e) || { ep: t.e, rating: null, source: null, jfId: '' };
                     if (x.rating == null && j.rating != null) {
                         x.rating = j.rating;
                         x.source = 'Jellyfin';
@@ -210,13 +251,14 @@
                     if (!x.jfId && j.jfId) x.jfId = j.jfId;
                     x.name = x.name || j.name;
                     x.airDate = x.airDate || j.airDate;
-                    byEp.set(n, x);
+                    byEp.set(t.e, x);
+                    if (!seasonIds[t.s] && jf.seasonIds && jf.seasonIds[s]) seasonIds[t.s] = jf.seasonIds[s];
                 }
             }
-            const episodes = [...byEp.values()].sort((a, b) => a.ep - b.ep);
-            if (episodes.length) out.push({ num: s, seasonJfId: jf.seasonIds[s] || '', episodes });
         }
-        return out;
+        return [...bySeason.keys()].sort((a, b) => a - b)
+            .map(s => ({ num: s, seasonJfId: seasonIds[s] || '', episodes: [...bySeason.get(s).values()].sort((a, b) => a.ep - b.ep) }))
+            .filter(s => s.episodes.length);
     }
 
     function ratingStyle(r) {
