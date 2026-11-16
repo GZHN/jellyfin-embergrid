@@ -1,6 +1,6 @@
 {
   "name": "jellyfin-embergrid",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Episode ratings heatmap for Jellyfin Web, with invertible axes and season averages.",
   "license": "MIT",
   "private": true,

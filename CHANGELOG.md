@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.1 — 2026-11-16
 
 - **Ratings:** Match Jellyfin episodes to IMDb by absolute episode number when the library and IMDb split a show into seasons differently (e.g. Jellyfin S2E61 versus IMDb S1E61). Previously such episodes appeared twice, in an extra season column. Newly aired episodes not yet on IMDb stay in their own season.
 

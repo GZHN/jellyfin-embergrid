@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    // Jellyfin Embergrid v1.1.0 — SPDX-License-Identifier: MIT
+    // Jellyfin Embergrid v1.1.1 — SPDX-License-Identifier: MIT
     // Derived from Damocles-fr/jellyfin-imdb-episodes-heatmap-ratings-grid.
     // Copyright (c) 2026 Damocles-fr. See LICENSE and NOTICE.md.
     // Embergrid: heatmap palette, season averages, cache isolation and retry handling.
@@ -38,7 +38,7 @@
             diagnosticNode.style.cssText = 'position:fixed;bottom:12px;right:12px;z-index:2147483647;max-width:80vw;padding:10px 14px;background:#17212b;color:white;border:1px solid #1da1f2;border-radius:6px;font:13px sans-serif;pointer-events:none';
             document.body.appendChild(diagnosticNode);
         }
-        diagnosticNode.textContent = 'Embergrid 1.1.0: ' + message;
+        diagnosticNode.textContent = 'Embergrid 1.1.1: ' + message;
     }
     let lastDiagnostic = '';
     function report(message) { if(message !== lastDiagnostic) { lastDiagnostic=message; diagnostic(message); } }
