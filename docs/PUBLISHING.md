@@ -29,7 +29,7 @@ git push origin v1.0.0
 
 ## CDN installation after publication
 
-Edit examples/cdn-loader.js: set repository to YOUR_GITHUB_USER/jellyfin-embergrid and revision to the tag you published. Paste that configured loader into the Injector field instead of the full script. The file must exist at the repository root at that tag.
+examples/cdn-loader.js and the loader snippet in the README point at GZHN/jellyfin-embergrid. For a fork, change the repository and tag in the script URL to your own repository and the tag you published. Paste that loader into the Injector field instead of the full script. The script file must exist at the repository root at that tag.
 
 Example published URL shape:
 
@@ -44,6 +44,7 @@ This example is a template, not a live project URL. CDN propagation/caching can 
 - Run npm run check and npm test; confirm GitHub Actions passes.
 - Perform manual Jellyfin checks and record versions/results.
 - Update script version, package.json and CHANGELOG consistently.
+- After tagging, update the pinned tag in the README loader snippet and examples/cdn-loader.js.
 - Keep upstream license/attribution; review external dataset terms if changing how it is used.
 - Ensure DEBUG is false by default; no private screenshots or tokens in the repository.
 - Configure issue templates and optionally enable private vulnerability reporting.

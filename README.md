@@ -37,25 +37,82 @@ Episodes run across the top. The last cell on each row is that season's average,
 
 The user confirmed that the v3 predecessor mounted successfully in a local Jellyfin instance and supplied grid/list/wrapped screenshots. Later revisions removed the additional views. Exact Jellyfin, plugin and browser versions were not recorded; this is not a version-by-version compatibility certification.
 
-## Install: paste the complete script (recommended)
+## Install
 
-1. Install JavaScript Injector using its own instructions and restart Jellyfin if required by the plugin.
+Choose **one** of the two methods below. Never enable both at the same time.
+
+| | Quick install (loader) | Full script |
+| --- | --- | --- |
+| What you paste | A short loader snippet | The entire script file |
+| Updates | Change one version number | Paste the new file again |
+| Custom settings (`CONFIG`) | Not possible, defaults only | Yes |
+| Script download at page load | Yes, from jsDelivr | No |
+
+### Before you start
+
+1. Install [JavaScript Injector](https://github.com/n00bcodr/Jellyfin-JavaScript-Injector) using its own instructions, and restart Jellyfin if the plugin asks you to.
 2. Open **Dashboard → JavaScript Injector / JS Injector**.
-3. Disable/remove any previous episode-ratings loader or script to avoid competing implementations.
+3. Disable or remove any earlier episode-ratings script or loader, so two implementations do not compete.
+
+### Option A: quick install with the loader
+
 4. Add a script named **Embergrid**.
-5. Open [Jellyfin-Embergrid-Episode-Ratings.js](Jellyfin-Embergrid-Episode-Ratings.js), select **Raw**, and copy the entire contents into **JavaScript Code**. Do not include Markdown fences or HTML script tags.
-6. Enable the entry and save. If your plugin exposes a Script URL field, leave it empty for this installation method. This script is not an ES module.
+5. Paste this snippet into **JavaScript Code**:
+
+   ```javascript
+   (() => {
+     if (document.querySelector("#jellyfin-embergrid-loader")) return;
+
+     const script = document.createElement("script");
+     script.id = "jellyfin-embergrid-loader";
+     script.src =
+       "https://cdn.jsdelivr.net/gh/GZHN/jellyfin-embergrid@v1.1.1/Jellyfin-Embergrid-Episode-Ratings.js";
+     script.async = true;
+     script.onerror = () => {
+       console.error("[JF-Embergrid] Could not download script", script.src);
+       script.remove();
+     };
+     document.head.appendChild(script);
+   })();
+   ```
+
+6. Enable the entry and save.
 7. Refresh Jellyfin with **Ctrl+F5**, open a series with seasons, and expand **IMDb Episodes Grid**.
 
-Pasting the complete file needs **no hosting**. To update, replace the pasted contents with the newer version and refresh. Validate in your Jellyfin installation before publishing.
+The same snippet is available as [examples/cdn-loader.js](examples/cdn-loader.js).
 
-## Optional: load from your GitHub repository
+**Pinned version or `@latest`?** The snippet pins a release (`@v1.1.1`), so you only get a new version when you choose to. Replacing `@v1.1.1` with `@latest` installs new releases automatically. jsDelivr can cache `@latest` for up to about a week, so a new release may not appear right away. A pinned tag is more predictable. A pinned tag is also better if you publish the snippet for others.
 
-After publishing your own repository, follow [the publishing guide](docs/PUBLISHING.md). The optional [loader template](examples/cdn-loader.js) points at your published script and prevents duplicate downloads. Configure its repository and tested revision before use. It is an alternative to full-file pasting, not an additional script to enable alongside it.
+### Option B: paste the complete script
+
+Use this option to change settings, or to avoid loading code from a CDN.
+
+4. Add a script named **Embergrid**.
+5. Open [Jellyfin-Embergrid-Episode-Ratings.js](Jellyfin-Embergrid-Episode-Ratings.js), select **Raw**, and copy the entire contents into **JavaScript Code**. Do not include Markdown fences or HTML `<script>` tags.
+6. Optionally adjust the `CONFIG` object at the top (see [Configuration](#configuration)).
+7. Enable the entry and save. If your plugin has a Script URL field, leave it empty. This script is not an ES module.
+8. Refresh Jellyfin with **Ctrl+F5**, open a series with seasons, and expand **IMDb Episodes Grid**.
+
+This method needs **no hosting** and makes no request to load the script itself.
+
+### Updating
+
+- **Loader:** change the version in the URL (for example `@v1.1.1` → `@v1.2.0`), save, and press **Ctrl+F5**.
+- **Full script:** replace the pasted contents with the new file, re-apply your `CONFIG` changes, save, and press **Ctrl+F5**.
+
+See the [releases](https://github.com/GZHN/jellyfin-embergrid/releases) and the [changelog](CHANGELOG.md) for what changed.
+
+### Not working?
+
+Check that only one Embergrid entry is enabled and that you did a full refresh. Then see [Troubleshooting](docs/TROUBLESHOOTING.md). Setting `DEBUG: true` (Option B only) shows on-screen mount diagnostics.
+
+### Running your own fork
+
+To serve the script from your own repository, follow [the publishing guide](docs/PUBLISHING.md). Then change `GZHN/jellyfin-embergrid` and the tag in the loader to your repository and a release you have tested.
 
 ## Configuration
 
-Edit the `CONFIG` object near the top before pasting:
+Settings only apply to the full-script install (Option B). Edit the `CONFIG` object near the top before pasting:
 
 | Option | Default | Purpose |
 | --- | --- | --- |
@@ -101,7 +158,7 @@ Browser session storage contains cached metadata/ratings; local storage stores t
 ## Known limitations
 
 - Jellyfin DOM/custom-theme changes may require selector updates.
-- Dataset season numbering can differ from your library; additional dataset-only episode cells can appear. This is not a guarantee of a playable local episode or perfect anime ordering.
+- Dataset season numbering can differ from your library. When your library uses absolute episode numbers (or IMDb does), episodes are matched by absolute number. If IMDb skips episodes in the middle of a run, this matching can shift. Dataset-only episode cells can still appear. A cell is not a guarantee of a playable local episode or perfect anime ordering.
 - The grid falls back to IMDb season pages when a local target is unavailable.
 - External dataset/metadata failures show a retry notice while preserving locally available ratings. If no usable data source succeeds, an error with Retry is shown.
 - In exceptionally large series, only the first episode numbers that fit the configured cell limit are shown; averages still include all rated episodes.
