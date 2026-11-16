@@ -35,8 +35,6 @@ Episodes run across the top. The last cell on each row is that season's average,
 - Series pages with season cards. Movies and individual episode pages are not targets.
 - Internet access to jsDelivr for optional external IMDb ratings. Local Jellyfin episode data still works when jsDelivr is unavailable.
 
-The user confirmed that the v3 predecessor mounted successfully in a local Jellyfin instance and supplied grid/list/wrapped screenshots. Later revisions removed the additional views. Exact Jellyfin, plugin and browser versions were not recorded; this is not a version-by-version compatibility certification.
-
 ## Install
 
 Choose **one** of the two methods below. Never enable both at the same time.
